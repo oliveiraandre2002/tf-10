@@ -204,14 +204,22 @@ class MiniGit:
         return tuple(resultado)
 
 
-# Teste das Partes 1, 2 e 3
+def tentar(acao):
+    try:
+        acao()
+    except ValueError as erro:
+        print("erro:", erro)
+
+# Teste oficial do professor
 
 git = MiniGit()
 
 git.commitar("primeiro commit")
-git.commitar("segundo commit")
+print(git.passos)
 
+git.commitar("segundo commit")
 git.criar_branch("feature")
+print(git.passos)
 
 git.commitar("terceiro commit")
 
@@ -221,10 +229,59 @@ git.commitar("quarto commit")
 git.trocar_branch("main")
 git.mesclar("feature")
 
+print(git.pais("c5"))
 print(git.log(), git.passos)
-print(git.buscar("terceiro"), git.passos)
-print(git.merges())
 print(git.mensagem("c3"), git.passos)
+print(git.buscar("quarto"), git.passos)
+print(git.merges())
 
 git.trocar_branch("feature")
 print(git.log(), git.passos)
+
+git.trocar_branch("main")
+
+
+# Testes que precisam apresentar erros
+
+tentar(lambda: git.trocar_branch("inexistente"))
+tentar(lambda: git.criar_branch("main"))
+tentar(lambda: git.mesclar("main"))
+tentar(lambda: git.pais("c99"))
+
+
+def medir(quantidade):
+    # Cria um repositório novo para realizar a medição.
+    git_teste = MiniGit()
+
+    # Cria a quantidade solicitada de commits.
+    for numero in range(quantidade):
+        git_teste.commitar("commit " + str(numero))
+
+    # Guarda os passos gastos pelo último commitar.
+    passos_commitar = git_teste.passos
+
+    # Executa a leitura do histórico.
+    git_teste.log()
+
+    # Guarda os passos gastos pelo log.
+    passos_log = git_teste.passos
+
+    # Devolve os dois resultados.
+    return passos_commitar, passos_log
+
+
+# Tabela de comparação entre escrita e leitura.
+
+print()
+print("commits   passos do commitar   passos do log")
+
+for quantidade in (10, 100, 1000):
+    passos_commitar, passos_log = medir(quantidade)
+
+    print(
+        quantidade,
+        "       ",
+        passos_commitar,
+        "                    ",
+        passos_log
+    )
