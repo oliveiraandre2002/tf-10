@@ -1,4 +1,7 @@
 
+from collections import deque
+
+
 class MiniGit:
 
     # Simula um histórico Git utilizando dicionários.
@@ -15,7 +18,6 @@ class MiniGit:
 
     def __init__(self):
         # Inicializa o repositório vazio na branch main.
-        # Custo: 0 passos de operação pública.
         self.__pais = {}
         self.__mensagens = {}
         self.__branches = {"main": None}
@@ -24,7 +26,7 @@ class MiniGit:
         self.__passos = 0
 
     def commitar(self, mensagem):
-        # Cria um commit, registra seu pai e move a branch.
+        # Cria um commit e move a branch.
         # Custo: 2 passos.
 
         if not mensagem or not mensagem.strip():
@@ -51,7 +53,7 @@ class MiniGit:
         return identificador
 
     def mensagem(self, commit):
-        # Consulta diretamente a mensagem pelo identificador.
+        # Consulta a mensagem pelo identificador.
         # Custo: 1 passo.
 
         if commit not in self.__mensagens:
@@ -63,7 +65,7 @@ class MiniGit:
         return self.__mensagens[commit]
 
     def pais(self, commit):
-        # Devolve os pais como tupla, protegendo a lista interna.
+        # Devolve os pais como tupla.
         # Custo: 1 passo.
 
         if commit not in self.__pais:
@@ -76,7 +78,7 @@ class MiniGit:
 
     @property
     def passos(self):
-        # Permite consultar os passos sem alterar o valor.
+        # Permite consultar a quantidade de passos.
         return self.__passos
 
     def criar_branch(self, nome):
@@ -145,8 +147,64 @@ class MiniGit:
         # Informa qual branch está selecionada.
         return self.__branch_atual
 
+    def log(self):
+        # Percorre o histórico usando uma fila.
+        # Cada commit aparece apenas uma vez.
 
-# Teste da Parte 2
+        fila = deque()
+        visitados = set()
+        resultado = []
+
+        commit_atual = self.__branches[self.__branch_atual]
+
+        if commit_atual is not None:
+            fila.append(commit_atual)
+
+        while fila:
+            commit = fila.popleft()
+
+            if commit not in visitados:
+                visitados.add(commit)
+                resultado.append(commit)
+
+                for pai in self.__pais[commit]:
+                    fila.append(pai)
+
+        self.__passos = len(resultado)
+
+        return tuple(resultado)
+
+    def buscar(self, texto):
+        # Procura texto nas mensagens em ordem de criação.
+
+        examinados = 0
+
+        for commit in self.__mensagens:
+            examinados += 1
+
+            if texto in self.__mensagens[commit]:
+                self.__passos = examinados
+                return commit
+
+        self.__passos = examinados
+
+        return None
+
+    def merges(self):
+        # Retorna commits que possuem mais de um pai.
+
+        resultado = []
+
+        for commit in self.__pais:
+            if len(self.__pais[commit]) > 1:
+                resultado.append(commit)
+
+        self.__passos = len(self.__pais)
+
+        return tuple(resultado)
+
+
+# Teste das Partes 1, 2 e 3
 
 git = MiniGit()
 
@@ -154,7 +212,6 @@ git.commitar("primeiro commit")
 git.commitar("segundo commit")
 
 git.criar_branch("feature")
-print(git.passos)
 
 git.commitar("terceiro commit")
 
@@ -164,5 +221,10 @@ git.commitar("quarto commit")
 git.trocar_branch("main")
 git.mesclar("feature")
 
-print(git.pais("c5"))
-print(git.mensagem("c5"))
+print(git.log(), git.passos)
+print(git.buscar("terceiro"), git.passos)
+print(git.merges())
+print(git.mensagem("c3"), git.passos)
+
+git.trocar_branch("feature")
+print(git.log(), git.passos)
